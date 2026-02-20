@@ -74,3 +74,4 @@ dupeBtn.MouseButton1Click:Connect(function()
 end)
 
 refresh()
+s
