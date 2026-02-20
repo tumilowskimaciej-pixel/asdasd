@@ -1,86 +1,76 @@
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local ItemList = Instance.new("ScrollingFrame")
-local DupeButton = Instance.new("TextButton")
-local UIListLayout = Instance.new("UIListLayout")
+local player = game:GetService("Players").LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
 
-local selectedItem = nil
+-- Usuwanie starego GUI jeśli istnieje
+if pGui:FindFirstChild("MaaciusDupe") then pGui.MaaciusDupe:Destroy() end
 
--- Ustawienia GUI
-ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.Name = "MaaciusDupeGUI"
+local sg = Instance.new("ScreenGui", pGui)
+sg.Name = "MaaciusDupe"
 
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 200, 0, 300)
-MainFrame.Active = true
-MainFrame.Draggable = true
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0, 250, 0, 350)
+frame.Position = UDim2.new(0.5, -125, 0.5, -175)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Active = true
+frame.Draggable = true
 
-Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "MAACIUS DUPE"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "MAACIUS DUPE V2"
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+title.TextColor3 = Color3.new(1, 1, 1)
 
-ItemList.Parent = MainFrame
-ItemList.Position = UDim2.new(0, 5, 0, 35)
-ItemList.Size = UDim2.new(1, -10, 0, 220)
-ItemList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ItemList.CanvasSize = UDim2.new(0, 0, 10, 0)
+local list = Instance.new("ScrollingFrame", frame)
+list.Size = UDim2.new(1, -20, 0, 240)
+list.Position = UDim2.new(0, 10, 0, 50)
+list.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+list.CanvasSize = UDim2.new(0, 0, 5, 0)
 
-UIListLayout.Parent = ItemList
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local layout = Instance.new("UIListLayout", list)
+layout.Padding = UDim.new(0, 5)
 
-DupeButton.Parent = MainFrame
-DupeButton.Position = UDim2.new(0, 5, 0, 260)
-DupeButton.Size = UDim2.new(1, -10, 0, 35)
-DupeButton.Text = "DUPE SELECTED"
-DupeButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-DupeButton.TextColor3 = Color3.new(1, 1, 1)
+local dupeBtn = Instance.new("TextButton", frame)
+dupeBtn.Size = UDim2.new(1, -20, 0, 40)
+dupeBtn.Position = UDim2.new(0, 10, 0, 300)
+dupeBtn.Text = "DUPLIKUJ PRZEDMIOT"
+dupeBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+dupeBtn.TextColor3 = Color3.new(1, 1, 1)
 
--- Funkcja czytająca EQ
-local function updateInventory()
-    for _, child in pairs(ItemList:GetChildren()) do
-        if child:IsA("TextButton") then child:Destroy() end
-    end
+local selected = nil
 
-    local player = game:GetService("Players").LocalPlayer
-    local inv = player:FindFirstChild("Inventory") or player:FindFirstChild("Backpack")
+-- Funkcja szukająca itemów (sprawdza różne miejsca)
+local function getInv()
+    return player:FindFirstChild("Inventory") or player:FindFirstChild("Backpack") or player:FindFirstChild("Data") and player.Data:FindFirstChild("Inventory")
+end
 
+local function refresh()
+    for _, v in pairs(list:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+    
+    local inv = getInv()
     if inv then
         for _, item in pairs(inv:GetChildren()) do
-            local itemBtn = Instance.new("TextButton")
-            itemBtn.Parent = ItemList
-            itemBtn.Size = UDim2.new(1, 0, 0, 30)
-            itemBtn.Text = item.Name
-            itemBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            itemBtn.TextColor3 = Color3.new(1, 1, 1)
-
-            itemBtn.MouseButton1Click:Connect(function()
-                selectedItem = item.Name
-                print("Maacius: Wybrano " .. selectedItem)
-                for _, btn in pairs(ItemList:GetChildren()) do
-                    if btn:IsA("TextButton") then btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) end
-                end
-                itemBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+            local btn = Instance.new("TextButton", list)
+            btn.Size = UDim2.new(1, 0, 0, 30)
+            btn.Text = item.Name
+            btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            btn.TextColor3 = Color3.new(1, 1, 1)
+            
+            btn.MouseButton1Click:Connect(function()
+                selected = item.Name
+                print("Wybrano: " .. selected)
+                for _, b in pairs(list:GetChildren()) do if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(50, 50, 50) end end
+                btn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
             end)
         end
     end
 end
 
--- Logika Dupe
-DupeButton.MouseButton1Click:Connect(function()
-    if selectedItem then
-        print("Maacius: Próba duplikacji: " .. selectedItem)
-        -- Tutaj musisz wpisać RemoteEvent z Case Paradise, który odpowiada za przedmioty
-        -- Przykład: game:GetService("ReplicatedStorage").Remotes.AddInventory:FireServer(selectedItem)
-    else
-        print("Najpierw wybierz przedmiot!")
+dupeBtn.MouseButton1Click:Connect(function()
+    if selected then
+        -- TUTAJ wpisujemy Remote z gry Case Paradise
+        -- Najczęściej: game:GetService("ReplicatedStorage").Remotes.UpdateInventory:FireServer(selected, 1)
+        print("MAACIUS DUPE: Próba skopiowania " .. selected)
     end
 end)
 
-updateInventory()
-print("GUI Maaciusa gotowe!")
+refresh()
